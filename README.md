@@ -21,9 +21,9 @@ To add CameraAPI to your mod you simply need to
 
 1. Download latest release from Releases page
 2. Place the file anywhere in your mod
-3. `require` it in your main.lua file and attach to a variable
+3. `require` it in your main.lua file and attach to a variable\
 `local CameraAPI = require("scripts.utils.camerapi")`
-4. Before using any functions don't forget to initialize the lib(for callbacks register)
+4. Before using any functions don't forget to initialize the lib(for callbacks register)\
 `CameraAPI:Init(YourModVariable)`
 
 #### Congratulations!

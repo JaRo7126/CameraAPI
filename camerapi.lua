@@ -6,7 +6,7 @@
 -- But if you're using REPENTOGON, this library still has extra feature: Camera modes
 -- With it you can "unlock" the camera to remove room walls limit and 1x1 size limit
 
---Tested on Repentance, REPENTOGON, 
+--More info on Github: https://github.com/JaRo7126/CameraAPI
 
 local CameraAPI = {}
 local CAMERA_VARIANT = Isaac.GetEntityVariantByName("Camera")
@@ -110,8 +110,25 @@ local function PostCameraRender()
 
 		camera.Position = camera_pos
 
-	elseif CameraAPI:GetCameraTimeout() == 0 then
-		CameraAPI:SetCameraLocked(true)
+	else
+		if CAMERA_DATA.follow then
+			local entity = CAMERA_DATA.follow
+
+			if entity:Exists() then
+				camera.Position = entity.Position + entity.Velocity
+			else
+				CAMERA_DATA.follow = nil
+				CameraAPI:SetCameraLocked(true)
+			end
+		end
+
+		if CameraAPI:GetCameraTimeout() == 0 then
+			CameraAPI:SetCameraLocked(true)
+
+			if CAMERA_DATA.follow then
+				CAMERA_DATA.follow = nil
+			end
+		end
 	end
 end
 
@@ -193,6 +210,19 @@ function CameraAPI:SetCameraPosition(pos, duration, force)
 
 	if force or (not force and not CameraAPI:IsCameraLocked()) then
 		CameraAPI:GetCamera().Position = pos
+		CameraAPI:SetCameraLocked(false)
+	end
+
+	CameraAPI:SetCameraTimeout(duration)
+end
+
+function CameraAPI:CameraFollowEntity(entity, duration, force)
+	if duration == nil then duration = -1 end
+	if force == nil then force = true end
+
+	if force or (not force and not CameraAPI:IsCameraLocked()) then
+		CameraAPI:GetCamera().Position = entity.Position
+		CAMERA_DATA.follow = entity
 		CameraAPI:SetCameraLocked(false)
 	end
 

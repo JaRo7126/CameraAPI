@@ -17,13 +17,14 @@ How CameraMode.FREE works? It uses trick with adding FLAG_NO_WALLS to RoomDescri
 
 # Adding library to the mod
 
-To add CameraAPI to your mod you simply need to
+To be able to use CameraAPI you simply need to
 
 1. Download latest release from Releases page
-2. Place the file anywhere in your mod
-3. `require` it in your main.lua file and attach to a variable\
+2. Place `camerapi.lua` file anywhere in your mod
+3. Place `entities2.xml` to your content folder or insert it's contents to a file with the same name(if you already have one)
+4. `require` it in your main.lua file and attach to a variable\
 `local CameraAPI = require("scripts.utils.camerapi")`
-4. Before using any functions don't forget to initialize the lib(for callbacks register)\
+5. Before using any functions don't forget to initialize the lib(for callbacks register)\
 `CameraAPI:Init(YourModVariable)`
 
 #### Congratulations!

@@ -9,7 +9,7 @@
 --More info on Github: https://github.com/JaRo7126/CameraAPI
 
 local CameraAPI = {}
-local CAMERA_VARIANT = Isaac.GetEntityVariantByName("Camera")
+local CAMERA_VARIANT = Isaac.GetEntityVariantByName("[CameraAPI] Camera Entity")
 local CAMERA_DATA = {
 	timeout = -1,
 	locked = true,
@@ -246,5 +246,6 @@ function CameraAPI:SetCameraMode(mode)
 
 	CAMERA_DATA.mode = mode
 end
+
 
 return CameraAPI

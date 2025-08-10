@@ -22,7 +22,7 @@ To be able to use CameraAPI you simply need to
 1. Download latest release from [Releases page](https://github.com/JaRo7126/CameraAPI/releases)
 2. Place `camerapi.lua` file anywhere in your mod
 3. Place `entities2.xml` to your content folder or insert it's contents to a file with the same name(if you already have one)
-4. `require` it in your main.lua file and attach to a variable\
+4. `require` the lib in your main.lua file and attach it to a variable\
 `local CameraAPI = require("scripts.utils.camerapi")`
 5. Before using any functions don't forget to initialize the lib(for callbacks register)\
 `CameraAPI:Init(YourModVariable)`

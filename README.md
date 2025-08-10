@@ -13,7 +13,7 @@ A The Binding of Isaac modding library, that was made primarily for manipulating
 
 CameraAPI is using invisible Hush entity to manipulate all camera movements. It works because when Hush's NpcState is equal to NpcState.STATE_APPEAR_CUSTOM(2) the game automatically snaps camera position to it's position. All you have to do is to spawn this invisible entity on first update and make it persistent between rooms. 
 
-How CameraMode.FREE works? It uses trick with adding FLAG_NO_WALLS to RoomDescriptor entry. In that case only room camera limit is gone, nothing more. "Beast crawlspace" also uses this flag if this helps to understand.
+How CameraMode.FREE works? It uses trick with adding FLAG_NO_WALLS to RoomDescriptor entry. In that case room borders limit is disabled only for camera(for some reason). "Beast crawlspace" also uses this flag if this helps to understand.
 
 # Adding library to the mod
 

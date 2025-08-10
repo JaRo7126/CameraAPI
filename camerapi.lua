@@ -3,8 +3,7 @@
 
 -- Works by spawning invisible Hush entity with NpcState constantly equal NpcState.STATE_APPEAR_CUSTOM(2)
 -- Because of this CameraAPI doesn't require REPENTOGON to work.
--- But if you're using REPENTOGON, this library still has extra feature: Camera modes
--- With it you can "unlock" the camera to remove room walls limit and 1x1 size limit
+-- But if you're using REPENTOGON, this library still has useful features
 
 --More info on Github: https://github.com/JaRo7126/CameraAPI
 

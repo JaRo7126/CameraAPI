@@ -1,13 +1,13 @@
 # CameraAPI
 
-A The Binding of Isaac modding library, that was made primarily for manipulating the game camera's position without REPENTOGON. But it also adds various useful features even with REPENTOGON installed
+A The Binding of Isaac modding library, that was made primarily for manipulating the game camera's position without [REPENTOGON](https://github.com/TeamREPENTOGON/REPENTOGON). But it also adds various useful features even with [REPENTOGON](https://github.com/TeamREPENTOGON/REPENTOGON) installed
 
 # Features
 
 - Change camera position
 - Make camera follow specific entity
 - Remove camera movement limits from the base game
-- Don't require REPENTOGON
+- Doesn't require [REPENTOGON](https://github.com/TeamREPENTOGON/REPENTOGON)
 
 # How does it work?
 

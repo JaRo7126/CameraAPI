@@ -8,12 +8,6 @@
 --More info on Github: https://github.com/JaRo7126/CameraAPI
 
 local CameraAPI = {}
-local CAMERA_VARIANT = Isaac.GetEntityVariantByName("[CameraAPI] Camera Entity")
-local CAMERA_DATA = {
-	timeout = -1,
-	locked = true,
-	mode = 1
-}
 
 CameraAPI.CameraMode = {
 	ROOM_BORDER = 1,
@@ -26,6 +20,14 @@ local function PostCameraUpdate()
 	local camera = CameraAPI:GetCamera()
 	local rooms = Game():GetLevel():GetRooms()
 	camera.State = NpcState.STATE_APPEAR_CUSTOM
+
+	if camera:GetSprite():GetFrame() > 2 then
+		camera:GetSprite():SetFrame(2)
+	end
+
+	if camera.EntityCollisionClass ~= EntityCollisionClass.ENTCOLL_NONE then
+		camera.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+	end
 
 	if CameraAPI:GetCameraTimeout() > 0 then
 		CameraAPI:SetCameraTimeout(CameraAPI:GetCameraTimeout() - 1)
@@ -57,6 +59,7 @@ end
 
 local function PostCameraRender()
 	local camera = CameraAPI:GetCamera()
+	local data = camera:GetData()["CameraAPI.CAMERA_DATA"]
 
 	if camera.FrameCount < 2 and SFXManager():IsPlaying(SoundEffect.SOUND_HUSH_LOW_ROAR) then
 		SFXManager():Stop(SoundEffect.SOUND_HUSH_LOW_ROAR)
@@ -66,8 +69,18 @@ local function PostCameraRender()
 
 		for _, entity in ipairs(Isaac.GetRoomEntities()) do
 
-			if entity.Type == EntityType.ENTITY_HUSH 
-				and entity.Variant ~= CAMERA_VARIANT
+			if (entity.Type == EntityType.ENTITY_MEGA_SATAN 
+					or entity.Type == EntityType.ENTITY_MEGA_SATAN_2
+				) 
+				and entity.Variant == 0
+				and (entity:ToNPC().State == NpcState.STATE_APPEAR_CUSTOM 
+					or entity:ToNPC().State == NpcState.STATE_SPECIAL
+				) then
+
+				camera.Position = entity.Position + entity.Velocity
+				return
+			elseif entity.Type == EntityType.ENTITY_HUSH 
+				and not entity:GetData()["CameraAPI.CAMERA_DATA"]
 				and entity:ToNPC().State == NpcState.STATE_APPEAR_CUSTOM then
 
 				camera.Position = entity.Position + entity.Velocity
@@ -77,11 +90,15 @@ local function PostCameraRender()
 
 				camera.Position = entity.Position + entity.Velocity - Vector(0, 100)
 				return
-			elseif entity.Type == EntityType.ENTITY_MOTHER
-				and (entity.Variant == 0 or entity.Variant == 10) then
-
-				camera.Position = entity.Position + entity.Velocity + Vector(0, 200)
-				return
+			elseif entity.Type == EntityType.ENTITY_MOTHER then
+				
+				if entity.Variant == 0 and entity.SubType == 0 then
+					camera.Position = Game():GetRoom():GetCenterPos()
+					return
+				elseif entity.Variant == 10 and entity:ToNPC().State == NpcState.STATE_SPECIAL then
+					camera.Position = entity.Position + entity.Velocity + Vector(0, 100)
+					return
+				end
 			elseif entity.Type == EntityType.ENTITY_BEAST
 				and entity.Variant == 0 then
 
@@ -105,13 +122,13 @@ local function PostCameraRender()
 		camera.Position = camera_pos
 
 	else
-		if CAMERA_DATA.follow then
-			local entity = CAMERA_DATA.follow
+		if data.follow then
+			local entity = data.follow
 
 			if entity:Exists() then
 				camera.Position = entity.Position + entity.Velocity
 			else
-				CAMERA_DATA.follow = nil
+				data.follow = nil
 				CameraAPI:SetCameraLocked(true)
 			end
 		end
@@ -119,8 +136,8 @@ local function PostCameraRender()
 		if CameraAPI:GetCameraTimeout() == 0 then
 			CameraAPI:SetCameraLocked(true)
 
-			if CAMERA_DATA.follow then
-				CAMERA_DATA.follow = nil
+			if data.follow then
+				data.follow = nil
 			end
 		end
 	end
@@ -138,11 +155,13 @@ end
 function CameraAPI:GetCamera()
 	local camera
 
-	for _, entity in ipairs(Isaac.FindByType(EntityType.ENTITY_HUSH, CAMERA_VARIANT)) do
-		if camera then
-			entity:Remove()
-		else
-			camera = entity:ToNPC()
+	for _, entity in ipairs(Isaac.FindByType(EntityType.ENTITY_HUSH)) do
+		if entity:GetData()["CameraAPI.CAMERA_DATA"] then
+			if camera then
+				entity:Remove()
+			else
+				camera = entity:ToNPC()
+			end
 		end
 	end
 
@@ -154,12 +173,22 @@ function CameraAPI:GetCamera()
 end
 
 function CameraAPI:SpawnCamera()
-	local camera = Isaac.Spawn(EntityType.ENTITY_HUSH, CAMERA_VARIANT, 0,
+	local camera = Isaac.Spawn(EntityType.ENTITY_HUSH, 0, 0,
 							Vector(0, 0), Vector(0, 0), nil):ToNPC()
+	camera.Size = 0
+	camera.Visible = false
+	camera.CanShutDoors = false
+	camera.Friction = 0
+	camera.Mass = 100
 	camera.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
 	camera.GridCollisionClass = GridCollisionClass.COLLISION_NONE
 	camera:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
 	camera:AddEntityFlags(EntityFlag.FLAG_PERSISTENT)
+	camera:GetData()["CameraAPI.CAMERA_DATA"] = {
+		timeout = -1,
+		locked = true,
+		mode = 1
+	}
 
 	if Options.CameraStyle == 1 then
 		Options.CameraStyle = 2
@@ -169,7 +198,7 @@ function CameraAPI:SpawnCamera()
 end
 
 function CameraAPI:IsCameraLocked()
-	return CAMERA_DATA.locked
+	return CameraAPI:GetCamera():GetData()["CameraAPI.CAMERA_DATA"].locked
 end
 
 function CameraAPI:SetCameraLocked(value)
@@ -181,11 +210,11 @@ function CameraAPI:SetCameraLocked(value)
 		return
 	end
 
-	CAMERA_DATA.locked = value
+	CameraAPI:GetCamera():GetData()["CameraAPI.CAMERA_DATA"].locked = value
 end
 
 function CameraAPI:GetCameraTimeout()
-	return CAMERA_DATA.timeout
+	return CameraAPI:GetCamera():GetData()["CameraAPI.CAMERA_DATA"].timeout
 end
 
 function CameraAPI:SetCameraTimeout(value)
@@ -195,7 +224,7 @@ function CameraAPI:SetCameraTimeout(value)
 		return
 	end
 
-	CAMERA_DATA.timeout = value
+	CameraAPI:GetCamera():GetData()["CameraAPI.CAMERA_DATA"].timeout = value
 end
 
 function CameraAPI:SetCameraPosition(pos, duration, force)
@@ -215,8 +244,10 @@ function CameraAPI:CameraFollowEntity(entity, duration, force)
 	if force == nil then force = true end
 
 	if force or (not force and not CameraAPI:IsCameraLocked()) then
-		CameraAPI:GetCamera().Position = entity.Position
-		CAMERA_DATA.follow = entity
+		local camera = CameraAPI:GetCamera()
+
+		camera.Position = entity.Position
+		camera:GetData()["CameraAPI.CAMERA_DATA"].follow = entity
 		CameraAPI:SetCameraLocked(false)
 	end
 
@@ -224,7 +255,7 @@ function CameraAPI:CameraFollowEntity(entity, duration, force)
 end
 
 function CameraAPI:GetCameraMode()
-	return CAMERA_DATA.mode
+	return CameraAPI:GetCamera():GetData()["CameraAPI.CAMERA_DATA"].mode
 end
 
 function CameraAPI:SetCameraMode(mode)
@@ -238,7 +269,7 @@ function CameraAPI:SetCameraMode(mode)
 		return
 	end
 
-	CAMERA_DATA.mode = mode
+	CameraAPI:GetCamera():GetData()["CameraAPI.CAMERA_DATA"].mode = mode
 end
 
 

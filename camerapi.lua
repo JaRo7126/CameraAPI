@@ -20,16 +20,25 @@ CameraAPI.CameraMode = {
 	FREE = 2
 }
 
+local ROOM_DATA = {}
+
 local function PostCameraUpdate()
 	local camera = CameraAPI:GetCamera()
+	local rooms = Game():GetLevel():GetRooms()
 	camera.State = NpcState.STATE_APPEAR_CUSTOM
 
 	if CameraAPI:GetCameraTimeout() > 0 then
 		CameraAPI:SetCameraTimeout(CameraAPI:GetCameraTimeout() - 1)
 	end
 
-	for i = 0, 168 do
-		local roomDesc = Game():GetLevel():GetRoomByIdx(i)
+	for i = 0, rooms.Size - 1 do
+		if ROOM_DATA[i] ~= rooms:Get(i).SafeGridIndex then
+			ROOM_DATA[i] = rooms:Get(i).SafeGridIndex
+		end
+	end
+
+	for i = 0, #ROOM_DATA do
+		local roomDesc = Game():GetLevel():GetRoomByIdx(ROOM_DATA[i])
 
 		if roomDesc and roomDesc.Data then
 			if roomDesc.Flags & RoomDescriptor.FLAG_NO_WALLS ~= 0
@@ -48,23 +57,9 @@ end
 
 local function PostCameraRender()
 	local camera = CameraAPI:GetCamera()
-	local roomDesc = Game():GetLevel():GetCurrentRoomDesc()
 
 	if camera.FrameCount < 2 and SFXManager():IsPlaying(SoundEffect.SOUND_HUSH_LOW_ROAR) then
 		SFXManager():Stop(SoundEffect.SOUND_HUSH_LOW_ROAR)
-	end
-
-	if roomDesc and roomDesc.Data then
-		if roomDesc.Flags & RoomDescriptor.FLAG_NO_WALLS ~= 0
-			and CameraAPI:GetCameraMode() == CameraAPI.CameraMode.ROOM_BORDER then
-
-			roomDesc.Flags = roomDesc.Flags ~ RoomDescriptor.FLAG_NO_WALLS
-
-		elseif roomDesc.Flags & RoomDescriptor.FLAG_NO_WALLS == 0
-			and CameraAPI:GetCameraMode() == CameraAPI.CameraMode.FREE then
-
-			roomDesc.Flags = roomDesc.Flags | RoomDescriptor.FLAG_NO_WALLS
-		end
 	end
 
 	if CameraAPI:IsCameraLocked() then
@@ -181,7 +176,7 @@ function CameraAPI:SetCameraLocked(value)
 	if not value then
 		value = false
 	elseif type(value) ~= "boolean" then
-		print(CameraAPI.Mod.Name .. " error in SetCameraLocked(): value is not a boolean (" .. tostring(value or "nil") .. ")")
+		error("bad argument #1 to CameraAPI_SetCameraLocked (boolean expected, got " .. type(value) .. ")")
 		Isaac.DebugString(CameraAPI.Mod.Name .. " error in SetCameraLocked(): value is not a boolean (" .. tostring(value or "nil") .. ")")
 		return
 	end
@@ -195,7 +190,7 @@ end
 
 function CameraAPI:SetCameraTimeout(value)
 	if not value or type(value) ~= "number" then
-		print(CameraAPI.Mod.Name .. " error in SetCameraTimeout(): value is NAN (" .. tostring(value or "nil") .. ")")
+		error("bad argument #1 to CameraAPI_SetCameraTimeout (number expected, got " .. type(value) .. ")")
 		Isaac.DebugString(CameraAPI.Mod.Name .. " error in SetCameraTimeout(): value is NAN (" .. tostring(value or "nil") .. ")")
 		return
 	end
@@ -238,7 +233,7 @@ function CameraAPI:SetCameraMode(mode)
 		or mode > 2
 		or mode < 1 then
 
-		print(CameraAPI.Mod.Name .. " error in SetCameraMode(): unknown CameraMode (" .. tostring(mode or "nil") .. ")")
+		error("bad argument #1 to CameraAPI_SetCameraMode (CameraMode expected, got " .. type(value) .. ")")
 		Isaac.DebugString(CameraAPI.Mod.Name .. " error in SetCameraMode(): unknown CameraMode (" .. tostring(mode or "nil") .. ")")
 		return
 	end

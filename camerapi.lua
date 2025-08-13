@@ -5,7 +5,7 @@
 -- Because of this CameraAPI doesn't require REPENTOGON to work.
 -- But if you're using REPENTOGON, this library still has useful features
 
---More info on Github: https://github.com/JaRo7126/CameraAPI
+-- More info on Github: https://github.com/JaRo7126/CameraAPI
 
 local CameraAPI = {}
 
@@ -15,6 +15,7 @@ CameraAPI.CameraMode = {
 }
 
 local ROOM_DATA = {}
+local RGON = REPENTOGON
 
 local function PostCameraUpdate()
 	local camera = CameraAPI:GetCamera()
@@ -123,13 +124,20 @@ local function PostCameraRender()
 
 	else
 		if data.follow then
-			local entity = data.follow
+			if tostring(data.follow):sub(1, 8) == "userdata"
+				and data.follow.Type then
 
-			if entity:Exists() then
-				camera.Position = entity.Position + entity.Velocity
-			else
-				data.follow = nil
-				CameraAPI:SetCameraLocked(true)
+				if data.follow:Exists() then
+					local offset = data.follow_offset or Vector.Zero
+
+					CameraAPI:SetCameraPosition(data.follow.Position + data.follow.Velocity + offset)
+				else
+					data.follow = nil
+					data.follow_offset = nil
+					CameraAPI:SetCameraLocked(true)
+				end
+			elseif data.follow.Zero then
+				CameraAPI:SetCameraPosition(data.follow)
 			end
 		end
 
@@ -138,6 +146,9 @@ local function PostCameraRender()
 
 			if data.follow then
 				data.follow = nil
+			end
+			if data.follow_offset then
+				data.follow_offset = nil
 			end
 		end
 	end
@@ -148,14 +159,15 @@ function CameraAPI:Init(mod)
 		CameraAPI.Mod = mod
 
 		mod:AddCallback(ModCallbacks.MC_POST_UPDATE, PostCameraUpdate)
-		mod:AddCallback(ModCallbacks.MC_POST_RENDER, PostCameraRender)
+		mod:AddPriorityCallback(ModCallbacks.MC_POST_RENDER, CallbackPriority.LATE, PostCameraRender)
 	end
 end
 
 function CameraAPI:GetCamera()
 	local camera
 
-	for _, entity in ipairs(Isaac.FindByType(EntityType.ENTITY_HUSH)) do
+	for _, entity in ipairs(Isaac.FindByType(RGON and EntityType.ENTITY_SHOPKEEPER 
+							or EntityType.ENTITY_HUSH)) do
 		if entity:GetData()["CameraAPI.CAMERA_DATA"] then
 			if camera then
 				entity:Remove()
@@ -173,8 +185,9 @@ function CameraAPI:GetCamera()
 end
 
 function CameraAPI:SpawnCamera()
-	local camera = Isaac.Spawn(EntityType.ENTITY_HUSH, 0, 0,
-							Vector(0, 0), Vector(0, 0), nil):ToNPC()
+	local camera = Isaac.Spawn(RGON and EntityType.ENTITY_SHOPKEEPER 
+								or EntityType.ENTITY_HUSH, 0, 0,
+								Vector.Zero, Vector.Zero, nil):ToNPC()
 	camera.Size = 0
 	camera.Visible = false
 	camera.CanShutDoors = false
@@ -206,7 +219,6 @@ function CameraAPI:SetCameraLocked(value)
 		value = false
 	elseif type(value) ~= "boolean" then
 		error("bad argument #1 to CameraAPI_SetCameraLocked (boolean expected, got " .. type(value) .. ")")
-		Isaac.DebugString(CameraAPI.Mod.Name .. " error in SetCameraLocked(): value is not a boolean (" .. tostring(value or "nil") .. ")")
 		return
 	end
 
@@ -220,34 +232,52 @@ end
 function CameraAPI:SetCameraTimeout(value)
 	if not value or type(value) ~= "number" then
 		error("bad argument #1 to CameraAPI_SetCameraTimeout (number expected, got " .. type(value) .. ")")
-		Isaac.DebugString(CameraAPI.Mod.Name .. " error in SetCameraTimeout(): value is NAN (" .. tostring(value or "nil") .. ")")
 		return
 	end
 
 	CameraAPI:GetCamera():GetData()["CameraAPI.CAMERA_DATA"].timeout = value
 end
 
-function CameraAPI:SetCameraPosition(pos, duration, force)
+function CameraAPI:GetCameraPosition()
+	return CameraAPI:GetCamera().Position
+end
+
+function CameraAPI:SetCameraPosition(pos)
+	if not pos or not pos.Zero then
+		error("bad argument #1 to CameraAPI_SetCameraPosition (vector expected, got " .. type(value) .. ")")
+	end
+
+	if RGON then
+		Game():GetRoom():GetCamera():SetFocusPosition(pos)
+	elseif tostring(CameraAPI:GetCameraPosition()) ~= tostring(pos) then
+		CameraAPI:GetCamera().Position = pos
+	end
+end
+
+function CameraAPI:CameraFollowPosition(pos, duration, force)
 	if duration == nil then duration = -1 end
 	if force == nil then force = true end
 
 	if force or (not force and not CameraAPI:IsCameraLocked()) then
-		CameraAPI:GetCamera().Position = pos
+		CameraAPI:GetCamera():GetData()["CameraAPI.CAMERA_DATA"].follow = pos
+		CameraAPI:SetCameraPosition(pos)
 		CameraAPI:SetCameraLocked(false)
 	end
 
 	CameraAPI:SetCameraTimeout(duration)
 end
 
-function CameraAPI:CameraFollowEntity(entity, duration, force)
+function CameraAPI:CameraFollowEntity(entity, duration, offset, force)
+	if not offset then offset = Vector.Zero end
 	if duration == nil then duration = -1 end
 	if force == nil then force = true end
 
 	if force or (not force and not CameraAPI:IsCameraLocked()) then
 		local camera = CameraAPI:GetCamera()
 
-		camera.Position = entity.Position
+		CameraAPI:SetCameraPosition(entity.Position)
 		camera:GetData()["CameraAPI.CAMERA_DATA"].follow = entity
+		camera:GetData()["CameraAPI.CAMERA_DATA"].follow_offset = offset
 		CameraAPI:SetCameraLocked(false)
 	end
 
@@ -264,8 +294,7 @@ function CameraAPI:SetCameraMode(mode)
 		or mode > 2
 		or mode < 1 then
 
-		error("bad argument #1 to CameraAPI_SetCameraMode (CameraMode expected, got " .. type(value) .. ")")
-		Isaac.DebugString(CameraAPI.Mod.Name .. " error in SetCameraMode(): unknown CameraMode (" .. tostring(mode or "nil") .. ")")
+		error("bad argument #1 to CameraAPI_SetCameraMode (CameraMode expected, got " .. type(mode) .. ")")
 		return
 	end
 

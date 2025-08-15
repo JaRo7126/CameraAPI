@@ -136,7 +136,7 @@ local function PostCameraRender()
 					data.follow_offset = nil
 					CameraAPI:SetCameraLocked(true)
 				end
-			elseif data.follow.Zero then
+			else
 				CameraAPI:SetCameraPosition(data.follow)
 			end
 		end
@@ -264,7 +264,7 @@ function CameraAPI:GetCameraFollowPoint()
 			follow_point.Entity = data.follow
 			follow_point.PositionOffset = data.follow_offset or Vector.Zero
 
-		elseif data.follow.Zero then
+		else
 			follow_point.Position = data.follow
 			follow_point.PositionOffset = Vector.Zero
 		end

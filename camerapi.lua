@@ -238,8 +238,39 @@ function CameraAPI:SetCameraTimeout(value)
 	CameraAPI:GetCamera():GetData()["CameraAPI.CAMERA_DATA"].timeout = value
 end
 
-function CameraAPI:GetCameraPosition()
-	return CameraAPI:GetCamera().Position
+function CameraAPI:GetCameraWorldPosition()
+	local screen_width = Isaac.GetScreenWidth()
+	local screen_height = Isaac.GetScreenHeight()
+
+	local screen_center = Vector(screen_width / 2, screen_height / 2)
+	screen_center = screen_center - Game():GetRoom():GetRenderScrollOffset()
+	screen_center = screen_center - Game().ScreenShakeOffset
+	
+	local x = (screen_center.X - (screen_width - 338) * 0.5) / 0.65 + 60
+	local y = (screen_center.Y - (screen_height - 182) * 0.5) / 0.65 + 140
+
+	return Vector(x, y)
+end
+
+function CameraAPI:GetCameraFollowPoint()
+	local data = CameraAPI:GetCamera():GetData()["CameraAPI.CAMERA_DATA"]
+	local follow_point = {}
+
+	if data.follow then
+		if tostring(data.follow):sub(1, 8) == "userdata"
+			and data.follow.Type then
+
+			follow_point.Position = data.follow.Position
+			follow_point.Entity = data.follow
+			follow_point.PositionOffset = data.follow_offset or Vector.Zero
+
+		elseif data.follow.Zero then
+			follow_point.Position = data.follow
+			follow_point.PositionOffset = Vector.Zero
+		end
+	end
+
+	return follow_point
 end
 
 function CameraAPI:SetCameraPosition(pos)

@@ -36,7 +36,7 @@ CameraAPI:Init(YourModVariable)
 Now you can use any lib functions as you wish. Check the [wiki](https://github.com/JaRo7126/CameraAPI/wiki) for detailed info.
 
 # Are there any limits?
-No, there are no actual limits. However, I must say, that with active camera option enabled camera movements will be MUCH slower. I've already implemented auto-disabling it on camera init, but if you for whatever reason want to remove this feature, you can delete the corresponding code(other CameraAPI instances just disable it anyway).
+No, there are no actual limits. However, I must say, that with active camera option enabled camera movements will be MUCH slower. I've already implemented auto-disabling it on camera init, but if you for whatever reason want to remove this feature, you can delete the corresponding code(other CameraAPI instances will just disable it anyway).
 
 ## Special thanks to [Guantol](https://github.com/Guantol-Lemat) for making [LuaDecomps](https://github.com/Guantol-Lemat/Isaac.LuaDecomps) and Goganidze on [The Modding of Isaac discord server](https://discord.gg/modding-of-isaac-962027940131008653) for describing FLAG_NO_WALLS trick!
 

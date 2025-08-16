@@ -7,13 +7,12 @@ A The Binding of Isaac modding library, that was made primarily for manipulating
 - Change camera position
 - Make camera follow specific entity
 - Remove camera movement limits from the base game
-- Doesn't require [REPENTOGON](https://github.com/TeamREPENTOGON/REPENTOGON)
 
 # How does it work?
 
-CameraAPI is using invisible Hush entity to manipulate all camera movements. It works because when Hush's NpcState is equal to NpcState.STATE_APPEAR_CUSTOM(2) the game automatically snaps camera position to it's position. All you have to do is to spawn this invisible entity on first update and make it persistent between rooms. 
+CameraAPI uses invisible Hush entity to manipulate all camera movements. It works because when Hush's NpcState is equal to NpcState.STATE_APPEAR_CUSTOM(2) the game automatically snaps camera position to it's position. All you have to do is to spawn this invisible entity on first update and make it persistent between rooms. 
 
-How CameraMode.FREE works? It uses trick with adding FLAG_NO_WALLS to RoomDescriptor entry. In that case room borders limit is disabled only for camera(for some reason). "Beast crawlspace" also uses this flag if this helps to understand.
+CameraMode.FREE works by adding FLAG_NO_WALLS to RoomDescriptor entry. In that case room borders limit is disabled only for camera(for some reason).
 
 # Adding library to the mod
 
@@ -21,14 +20,18 @@ To be able to use CameraAPI you simply need to
 
 1. Download latest release from [Releases page](https://github.com/JaRo7126/CameraAPI/releases)
 2. Place `camerapi.lua` file anywhere in your mod
-3. Place `entities2.xml` to your content folder or insert it's contents to a file with the same name(if you already have one)
-4. `require` the lib in your main.lua file and attach it to a variable\
+3. `require` the lib in your main.lua file and attach it to a variable\
 `local CameraAPI = require("scripts.utils.camerapi")`
-5. Before using any functions don't forget to initialize the lib(for callbacks register)\
+4. Initialize the lib ONCE for callback registry\
 `CameraAPI:Init(YourModVariable)`
 
-#### Congratulations!
+**Congratulations!**
 Now you can use any lib functions as you wish
 
 # Are there any limits?
-Basically no. With CameroMode.FREE you can move game camera ANYWHERE you want. However, I must say, that with active camera option enabled camera movements will be MUCH slower. I've already implemented auto-disabling it on camera init, but if you for whatever reason don't want to disable it, you can delete the corresponding code(other CameraAPI instances might just disable it anyway).
+No, there are no actual limits. However, I must say, that with active camera option enabled camera movements will be MUCH slower. I've already implemented auto-disabling it on camera init, but if you for whatever reason want to remove this feature, you can delete the corresponding code(other CameraAPI instances just disable it anyway).
+
+**Special thanks to [Guantol](https://github.com/Guantol-Lemat) for making [LuaDecomps](https://github.com/Guantol-Lemat/Isaac.LuaDecomps) and Goganidze on [The Modding of Isaac discord server](https://discord.gg/modding-of-isaac-962027940131008653) for describing FLAG_NO_WALLS trick**
+
+
+

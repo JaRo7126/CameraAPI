@@ -33,7 +33,7 @@ CameraAPI:Init(YourModVariable)
 ```
 
 **Congratulations!**
-Now you can use any lib functions as you wish
+Now you can use any lib functions as you wish. Check the [wiki](https://github.com/JaRo7126/CameraAPI/wiki) for detailed info.
 
 # Are there any limits?
 No, there are no actual limits. However, I must say, that with active camera option enabled camera movements will be MUCH slower. I've already implemented auto-disabling it on camera init, but if you for whatever reason want to remove this feature, you can delete the corresponding code(other CameraAPI instances just disable it anyway).

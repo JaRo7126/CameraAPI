@@ -25,7 +25,7 @@ To be able to use CameraAPI you simply need to
 ```lua
 local CameraAPI = require("scripts.utils.camerapi")
 ```
-5. Initialize the lib ONCE for callback registry
+4. Initialize the lib ONCE for callback registry
 ```lua
 CameraAPI:Init(YourModVariable)
 ```

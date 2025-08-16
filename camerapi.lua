@@ -45,7 +45,14 @@ local function PostCameraUpdate()
 		end
 	end
 
-	for i = 0, #ROOM_DATA do
+	for i = GridRooms.ROOM_ANGEL_SHOP_IDX, GridRooms.ROOM_DEVIL_IDX do
+		if ROOM_DATA[i] ~= i then
+			ROOM_DATA[i] = i
+		end
+	end
+
+
+	for i = GridRooms.ROOM_ANGEL_SHOP_IDX, #ROOM_DATA do
 		local roomDesc = Game():GetLevel():GetRoomByIdx(ROOM_DATA[i])
 
 		if roomDesc and roomDesc.Data then
@@ -65,101 +72,40 @@ end
 
 local function PostCameraRender()
 	local camera = CameraAPI:GetCamera()
-	local data = camera:GetData()["CameraAPI.CAMERA_DATA"]
 
 	if camera.FrameCount < 2 and SFXManager():IsPlaying(SoundEffect.SOUND_HUSH_LOW_ROAR) then
 		SFXManager():Stop(SoundEffect.SOUND_HUSH_LOW_ROAR)
 	end
 
 	if CameraAPI:IsCameraLocked() then
-
 		if CameraAPI:GetCameraTimeout() ~= -1 then
 			CameraAPI:SetCameraTimeout(-1)
 		end
 
-		for _, entity in ipairs(Isaac.GetRoomEntities()) do
-
-			if (entity.Type == EntityType.ENTITY_MEGA_SATAN 
-					or entity.Type == EntityType.ENTITY_MEGA_SATAN_2
-				) 
-				and entity.Variant == 0
-				and (entity:ToNPC().State == NpcState.STATE_APPEAR_CUSTOM 
-					or entity:ToNPC().State == NpcState.STATE_SPECIAL
-				) then
-
-				camera.Position = entity.Position + entity.Velocity
-				return
-			elseif entity.Type == EntityType.ENTITY_HUSH 
-				and not entity:GetData()["CameraAPI.CAMERA_DATA"]
-				and entity:ToNPC().State == NpcState.STATE_APPEAR_CUSTOM then
-
-				camera.Position = entity.Position + entity.Velocity
-				return
-			elseif entity.Type == EntityType.ENTITY_ULTRAGREED
-				and entity:ToNPC().State == NpcState.STATE_APPEAR_CUSTOM then
-
-				camera.Position = entity.Position + entity.Velocity - Vector(0, 100)
-				return
-			elseif entity.Type == EntityType.ENTITY_MOTHER then
-				
-				if entity.Variant == 0 and entity.SubType == 0 then
-					camera.Position = Game():GetRoom():GetCenterPos()
-					return
-				elseif entity.Variant == 10 and entity:ToNPC().State == NpcState.STATE_SPECIAL then
-					camera.Position = entity.Position + entity.Velocity + Vector(0, 100)
-					return
-				end
-			elseif entity.Type == EntityType.ENTITY_BEAST
-				and entity.Variant == 0 then
-
-				if entity:ToNPC().State == 18 then
-					camera.Position = entity.Position + entity.Velocity
-				else
-					camera.Position = Game():GetRoom():GetCenterPos()
-				end
-				return
-			end
-		end
-
-		local camera_pos = Isaac.GetPlayer(0).Position + Isaac.GetPlayer(0).Velocity
-
-		for i = 0, Game():GetNumPlayers() - 1 do
-			local player = Isaac.GetPlayer(i)
-
-			camera_pos = camera_pos * 0.5 + (player.Position + player.Velocity) * 0.5
-		end
-
-		camera.Position = camera_pos
-
 	else
-		if data.follow then
-			if tostring(data.follow):sub(1, 8) == "userdata"
-				and data.follow.Type then
+		local data = camera:GetData()["CameraAPI.CAMERA_DATA"]
+		local follow = CameraAPI:GetCameraFollowPoint()
 
-				if data.follow:Exists() then
-					local offset = data.follow_offset or Vector.Zero
+		if follow.Entity then
 
-					CameraAPI:SetCameraPosition(data.follow.Position + data.follow.Velocity + offset)
-				else
-					data.follow = nil
-					data.follow_offset = nil
-					CameraAPI:SetCameraLocked(true)
-				end
+			if follow.Entity:Exists() then
+				CameraAPI:SetCameraPosition(follow.Position + follow.Entity.Velocity 
+											+ follow.PositionOffset)
 			else
-				CameraAPI:SetCameraPosition(data.follow)
+				data.follow = data.follow and nil
+				data.follow_offset = data.follow_offset and nil
+				CameraAPI:SetCameraLocked(true)
 			end
+		elseif follow.Position then
+			CameraAPI:SetCameraPosition(follow.Position)
 		end
 
 		if CameraAPI:GetCameraTimeout() == 0 then
 			CameraAPI:SetCameraLocked(true)
 			CameraAPI:SetCameraTimeout(-1)
 
-			if data.follow then
-				data.follow = nil
-			end
-			if data.follow_offset then
-				data.follow_offset = nil
-			end
+			data.follow = data.follow and nil
+			data.follow_offset = data.follow_offset and nil
 		end
 
 		if CameraAPI:GetCameraTimeout() < -1 then
@@ -279,7 +225,7 @@ function CameraAPI:GetCameraFollowPoint()
 	local data = CameraAPI:GetCamera():GetData()["CameraAPI.CAMERA_DATA"]
 	local follow_point = {}
 
-	if data.follow then
+	if not CameraAPI:IsCameraLocked() and data.follow then
 		if tostring(data.follow):sub(1, 8) == "userdata"
 			and data.follow.Type then
 
@@ -297,13 +243,13 @@ function CameraAPI:GetCameraFollowPoint()
 end
 
 function CameraAPI:SetCameraPosition(pos)
-	if not pos or not pos.Zero then
+	if not pos or not (pos.X and pos.Y) then
 		error("bad argument #1 to CameraAPI_SetCameraPosition (vector expected, got " .. type(value) .. ")")
 	end
 
 	if RGON then
 		Game():GetRoom():GetCamera():SetFocusPosition(pos)
-	elseif tostring(CameraAPI:GetCameraPosition()) ~= tostring(pos) then
+	elseif tostring(CameraAPI:GetCamera().Position) ~= tostring(pos) then
 		CameraAPI:GetCamera().Position = pos
 	end
 end

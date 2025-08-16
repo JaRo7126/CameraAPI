@@ -20,7 +20,12 @@ local RGON = REPENTOGON
 local function PostCameraUpdate()
 	local camera = CameraAPI:GetCamera()
 	local rooms = Game():GetLevel():GetRooms()
-	camera.State = NpcState.STATE_APPEAR_CUSTOM
+
+	if not CameraAPI:IsCameraLocked() then
+		camera.State = NpcState.STATE_APPEAR_CUSTOM
+	else
+		camera.State = 1000
+	end
 
 	if camera:GetSprite():GetFrame() > 2 then
 		camera:GetSprite():SetFrame(2)
@@ -67,6 +72,10 @@ local function PostCameraRender()
 	end
 
 	if CameraAPI:IsCameraLocked() then
+
+		if CameraAPI:GetCameraTimeout() ~= -1 then
+			CameraAPI:SetCameraTimeout(-1)
+		end
 
 		for _, entity in ipairs(Isaac.GetRoomEntities()) do
 
@@ -143,6 +152,7 @@ local function PostCameraRender()
 
 		if CameraAPI:GetCameraTimeout() == 0 then
 			CameraAPI:SetCameraLocked(true)
+			CameraAPI:SetCameraTimeout(-1)
 
 			if data.follow then
 				data.follow = nil
@@ -151,15 +161,29 @@ local function PostCameraRender()
 				data.follow_offset = nil
 			end
 		end
+
+		if CameraAPI:GetCameraTimeout() < -1 then
+			CameraAPI:SetCameraTimeout(-1)
+		end
 	end
 end
 
 function CameraAPI:Init(mod)
 	if not mod.CameraAPIInit then
+		mod.CameraAPIInit = true
 		CameraAPI.Mod = mod
 
 		mod:AddCallback(ModCallbacks.MC_POST_UPDATE, PostCameraUpdate)
 		mod:AddPriorityCallback(ModCallbacks.MC_POST_RENDER, CallbackPriority.LATE, PostCameraRender)
+	else
+		local warn = "[" .. CameraAPI.Mod.Name .. "] WARNING!: CameraAPI is already initialized!"
+
+		if RGON then
+			Console.PrintWarning(warn)
+		else
+			print(warn)
+			Isaac.DebugString(warn)
+		end
 	end
 end
 
@@ -191,8 +215,7 @@ function CameraAPI:SpawnCamera()
 	camera.Size = 0
 	camera.Visible = false
 	camera.CanShutDoors = false
-	camera.Friction = 0
-	camera.Mass = 100
+	camera.State = 1000
 	camera.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
 	camera.GridCollisionClass = GridCollisionClass.COLLISION_NONE
 	camera:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
@@ -289,13 +312,13 @@ function CameraAPI:CameraFollowPosition(pos, duration, force)
 	if duration == nil then duration = -1 end
 	if force == nil then force = true end
 
-	if force or (not force and not CameraAPI:IsCameraLocked()) then
+	if force or (not force and not CameraAPI:GetCameraFollowPoint().Position) then
 		CameraAPI:GetCamera():GetData()["CameraAPI.CAMERA_DATA"].follow = pos
 		CameraAPI:SetCameraPosition(pos)
+		CameraAPI:SetCameraTimeout(duration)
 		CameraAPI:SetCameraLocked(false)
 	end
 
-	CameraAPI:SetCameraTimeout(duration)
 end
 
 function CameraAPI:CameraFollowEntity(entity, duration, offset, force)
@@ -303,16 +326,16 @@ function CameraAPI:CameraFollowEntity(entity, duration, offset, force)
 	if duration == nil then duration = -1 end
 	if force == nil then force = true end
 
-	if force or (not force and not CameraAPI:IsCameraLocked()) then
+	if force or (not force and not CameraAPI:GetCameraFollowPoint().Position) then
 		local camera = CameraAPI:GetCamera()
 
 		CameraAPI:SetCameraPosition(entity.Position)
 		camera:GetData()["CameraAPI.CAMERA_DATA"].follow = entity
 		camera:GetData()["CameraAPI.CAMERA_DATA"].follow_offset = offset
+		CameraAPI:SetCameraTimeout(duration)
 		CameraAPI:SetCameraLocked(false)
 	end
 
-	CameraAPI:SetCameraTimeout(duration)
 end
 
 function CameraAPI:GetCameraMode()

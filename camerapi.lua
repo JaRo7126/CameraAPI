@@ -17,8 +17,66 @@ CameraAPI.CameraMode = {
 local ROOM_DATA = {}
 local RGON = REPENTOGON
 
+local function SpawnCamera()
+	local camera = Isaac.Spawn(RGON and EntityType.ENTITY_SHOPKEEPER 
+								or EntityType.ENTITY_HUSH, 0, 0,
+								Vector.Zero, Vector.Zero, nil):ToNPC()
+	camera.Size = 0
+	camera.Visible = false
+	camera.CanShutDoors = false
+	camera.State = 1000
+	camera.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+	camera.GridCollisionClass = GridCollisionClass.COLLISION_NONE
+	camera:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+	camera:AddEntityFlags(EntityFlag.FLAG_PERSISTENT)
+	camera:GetData()["CameraAPI.CAMERA_DATA"] = {
+		timeout = -1,
+		locked = true,
+		mode = 1
+	}
+
+	if Options.CameraStyle == 1 then
+		Options.CameraStyle = 2
+	end
+
+	return camera
+end
+
+local function GetCamera()
+	local camera
+
+	for _, entity in ipairs(Isaac.FindByType(RGON and EntityType.ENTITY_SHOPKEEPER 
+							or EntityType.ENTITY_HUSH)) do
+		if entity:GetData()["CameraAPI.CAMERA_DATA"] then
+			if camera then
+				entity:Remove()
+			else
+				camera = entity:ToNPC()
+			end
+		end
+	end
+
+	if not camera then
+		camera = SpawnCamera()
+	end
+
+	return camera
+end
+
+local function SetCameraPosition(pos)
+	if not pos or not (pos.X and pos.Y) then
+		error("bad argument #1 to CameraAPI_SetCameraPosition (vector expected, got " .. type(value) .. ")")
+	end
+
+	if RGON then
+		Game():GetRoom():GetCamera():SetFocusPosition(pos)
+	elseif tostring(GetCamera().Position) ~= tostring(pos) then
+		GetCamera().Position = pos
+	end
+end
+
 local function PostCameraUpdate()
-	local camera = CameraAPI:GetCamera()
+	local camera = GetCamera()
 	local rooms = Game():GetLevel():GetRooms()
 
 	if not CameraAPI:IsCameraLocked() then
@@ -71,7 +129,7 @@ local function PostCameraUpdate()
 end
 
 local function PostCameraRender()
-	local camera = CameraAPI:GetCamera()
+	local camera = GetCamera()
 
 	if camera.FrameCount < 2 and SFXManager():IsPlaying(SoundEffect.SOUND_HUSH_LOW_ROAR) then
 		SFXManager():Stop(SoundEffect.SOUND_HUSH_LOW_ROAR)
@@ -89,7 +147,7 @@ local function PostCameraRender()
 		if follow.Entity then
 
 			if follow.Entity:Exists() then
-				CameraAPI:SetCameraPosition(follow.Position + follow.Entity.Velocity 
+				SetCameraPosition(follow.Position + follow.Entity.Velocity 
 											+ follow.PositionOffset)
 			else
 				data.follow = data.follow and nil
@@ -97,7 +155,7 @@ local function PostCameraRender()
 				CameraAPI:SetCameraLocked(true)
 			end
 		elseif follow.Position then
-			CameraAPI:SetCameraPosition(follow.Position)
+			SetCameraPosition(follow.Position)
 		end
 
 		if CameraAPI:GetCameraTimeout() == 0 then
@@ -133,54 +191,8 @@ function CameraAPI:Init(mod)
 	end
 end
 
-function CameraAPI:GetCamera()
-	local camera
-
-	for _, entity in ipairs(Isaac.FindByType(RGON and EntityType.ENTITY_SHOPKEEPER 
-							or EntityType.ENTITY_HUSH)) do
-		if entity:GetData()["CameraAPI.CAMERA_DATA"] then
-			if camera then
-				entity:Remove()
-			else
-				camera = entity:ToNPC()
-			end
-		end
-	end
-
-	if not camera then
-		camera = CameraAPI:SpawnCamera()
-	end
-
-	return camera
-end
-
-function CameraAPI:SpawnCamera()
-	local camera = Isaac.Spawn(RGON and EntityType.ENTITY_SHOPKEEPER 
-								or EntityType.ENTITY_HUSH, 0, 0,
-								Vector.Zero, Vector.Zero, nil):ToNPC()
-	camera.Size = 0
-	camera.Visible = false
-	camera.CanShutDoors = false
-	camera.State = 1000
-	camera.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
-	camera.GridCollisionClass = GridCollisionClass.COLLISION_NONE
-	camera:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
-	camera:AddEntityFlags(EntityFlag.FLAG_PERSISTENT)
-	camera:GetData()["CameraAPI.CAMERA_DATA"] = {
-		timeout = -1,
-		locked = true,
-		mode = 1
-	}
-
-	if Options.CameraStyle == 1 then
-		Options.CameraStyle = 2
-	end
-
-	return camera
-end
-
 function CameraAPI:IsCameraLocked()
-	return CameraAPI:GetCamera():GetData()["CameraAPI.CAMERA_DATA"].locked
+	return GetCamera():GetData()["CameraAPI.CAMERA_DATA"].locked
 end
 
 function CameraAPI:SetCameraLocked(value)
@@ -191,11 +203,11 @@ function CameraAPI:SetCameraLocked(value)
 		return
 	end
 
-	CameraAPI:GetCamera():GetData()["CameraAPI.CAMERA_DATA"].locked = value
+	GetCamera():GetData()["CameraAPI.CAMERA_DATA"].locked = value
 end
 
 function CameraAPI:GetCameraTimeout()
-	return CameraAPI:GetCamera():GetData()["CameraAPI.CAMERA_DATA"].timeout
+	return GetCamera():GetData()["CameraAPI.CAMERA_DATA"].timeout
 end
 
 function CameraAPI:SetCameraTimeout(value)
@@ -204,7 +216,7 @@ function CameraAPI:SetCameraTimeout(value)
 		return
 	end
 
-	CameraAPI:GetCamera():GetData()["CameraAPI.CAMERA_DATA"].timeout = value
+	GetCamera():GetData()["CameraAPI.CAMERA_DATA"].timeout = value
 end
 
 function CameraAPI:GetCameraWorldPosition()
@@ -222,7 +234,7 @@ function CameraAPI:GetCameraWorldPosition()
 end
 
 function CameraAPI:GetCameraFollowPoint()
-	local data = CameraAPI:GetCamera():GetData()["CameraAPI.CAMERA_DATA"]
+	local data = GetCamera():GetData()["CameraAPI.CAMERA_DATA"]
 	local follow_point = {}
 
 	if not CameraAPI:IsCameraLocked() and data.follow then
@@ -242,25 +254,13 @@ function CameraAPI:GetCameraFollowPoint()
 	return follow_point
 end
 
-function CameraAPI:SetCameraPosition(pos)
-	if not pos or not (pos.X and pos.Y) then
-		error("bad argument #1 to CameraAPI_SetCameraPosition (vector expected, got " .. type(value) .. ")")
-	end
-
-	if RGON then
-		Game():GetRoom():GetCamera():SetFocusPosition(pos)
-	elseif tostring(CameraAPI:GetCamera().Position) ~= tostring(pos) then
-		CameraAPI:GetCamera().Position = pos
-	end
-end
-
 function CameraAPI:CameraFollowPosition(pos, duration, force)
 	if duration == nil then duration = -1 end
 	if force == nil then force = true end
 
 	if force or (not force and not CameraAPI:GetCameraFollowPoint().Position) then
-		CameraAPI:GetCamera():GetData()["CameraAPI.CAMERA_DATA"].follow = pos
-		CameraAPI:SetCameraPosition(pos)
+		GetCamera():GetData()["CameraAPI.CAMERA_DATA"].follow = pos
+		SetCameraPosition(pos)
 		CameraAPI:SetCameraTimeout(duration)
 		CameraAPI:SetCameraLocked(false)
 	end
@@ -273,9 +273,9 @@ function CameraAPI:CameraFollowEntity(entity, duration, offset, force)
 	if force == nil then force = true end
 
 	if force or (not force and not CameraAPI:GetCameraFollowPoint().Position) then
-		local camera = CameraAPI:GetCamera()
+		local camera = GetCamera()
 
-		CameraAPI:SetCameraPosition(entity.Position)
+		SetCameraPosition(entity.Position)
 		camera:GetData()["CameraAPI.CAMERA_DATA"].follow = entity
 		camera:GetData()["CameraAPI.CAMERA_DATA"].follow_offset = offset
 		CameraAPI:SetCameraTimeout(duration)
@@ -285,7 +285,7 @@ function CameraAPI:CameraFollowEntity(entity, duration, offset, force)
 end
 
 function CameraAPI:GetCameraMode()
-	return CameraAPI:GetCamera():GetData()["CameraAPI.CAMERA_DATA"].mode
+	return GetCamera():GetData()["CameraAPI.CAMERA_DATA"].mode
 end
 
 function CameraAPI:SetCameraMode(mode)
@@ -298,7 +298,7 @@ function CameraAPI:SetCameraMode(mode)
 		return
 	end
 
-	CameraAPI:GetCamera():GetData()["CameraAPI.CAMERA_DATA"].mode = mode
+	GetCamera():GetData()["CameraAPI.CAMERA_DATA"].mode = mode
 end
 
 

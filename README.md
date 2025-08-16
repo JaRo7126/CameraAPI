@@ -4,6 +4,7 @@ A The Binding of Isaac modding library, that was made primarily for manipulating
 
 # Features
 
+- Get current camera position
 - Change camera position
 - Make camera follow specific entity
 - Remove camera movement limits from the base game
@@ -12,7 +13,7 @@ A The Binding of Isaac modding library, that was made primarily for manipulating
 
 CameraAPI uses invisible Hush entity to manipulate all camera movements. It works because when Hush's NpcState is equal to NpcState.STATE_APPEAR_CUSTOM(2) the game automatically snaps camera position to it's position. All you have to do is to spawn this invisible entity on first update and make it persistent between rooms. 
 
-CameraMode.FREE works by adding FLAG_NO_WALLS to RoomDescriptor entry. In that case room borders limit is disabled only for camera(for some reason).
+CameraMode.FREE works by adding FLAG_NO_WALLS to RoomDescriptor entry. In that case room borders limit is disabled only for camera and projectiles(for some reason).
 
 # Adding library to the mod
 
@@ -31,7 +32,7 @@ Now you can use any lib functions as you wish
 # Are there any limits?
 No, there are no actual limits. However, I must say, that with active camera option enabled camera movements will be MUCH slower. I've already implemented auto-disabling it on camera init, but if you for whatever reason want to remove this feature, you can delete the corresponding code(other CameraAPI instances just disable it anyway).
 
-**Special thanks to [Guantol](https://github.com/Guantol-Lemat) for making [LuaDecomps](https://github.com/Guantol-Lemat/Isaac.LuaDecomps) and Goganidze on [The Modding of Isaac discord server](https://discord.gg/modding-of-isaac-962027940131008653) for describing FLAG_NO_WALLS trick**
+#### Special thanks to [Guantol](https://github.com/Guantol-Lemat) for making [LuaDecomps](https://github.com/Guantol-Lemat/Isaac.LuaDecomps) and Goganidze on [The Modding of Isaac discord server](https://discord.gg/modding-of-isaac-962027940131008653) for describing FLAG_NO_WALLS trick!
 
 
 

@@ -1,6 +1,8 @@
 # CameraAPI
 
-A The Binding of Isaac modding library, that was made primarily for manipulating the game camera's position without [REPENTOGON](https://github.com/TeamREPENTOGON/REPENTOGON). But it also adds various useful features even with [REPENTOGON](https://github.com/TeamREPENTOGON/REPENTOGON) installed
+A [The Binding of Isaac: Repentance](https://store.steampowered.com/app/1426300/The_Binding_of_Isaac_Repentance/) modding library, that was made primarily for manipulating the game camera's position without [REPENTOGON](https://github.com/TeamREPENTOGON/REPENTOGON). But it also adds various useful features even with [REPENTOGON](https://github.com/TeamREPENTOGON/REPENTOGON) installed.
+
+Tested on Repentance v1.7.9b.J835 (with and without REPENTOGON v1.0.12e) and on Repentance+ v1.9.7.12.J273
 
 # Features
 

@@ -21,10 +21,14 @@ To be able to use CameraAPI you simply need to
 
 1. Download latest release from [Releases page](https://github.com/JaRo7126/CameraAPI/releases)
 2. Place `camerapi.lua` file anywhere in your mod
-3. `lua require` the lib in your main.lua file and attach it to a variable\
-`lua local CameraAPI = require("scripts.utils.camerapi")`
-4. Initialize the lib ONCE for callback registry\
-`lua CameraAPI:Init(YourModVariable)`
+3. Require the lib in your main.lua file and attach it to a variable\
+```lua
+lua local CameraAPI = require("scripts.utils.camerapi")
+```
+5. Initialize the lib ONCE for callback registry\
+```lua
+lua CameraAPI:Init(YourModVariable)
+```
 
 **Congratulations!**
 Now you can use any lib functions as you wish

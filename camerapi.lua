@@ -25,6 +25,7 @@ local function SpawnCamera()
 	camera.Visible = false
 	camera.CanShutDoors = false
 	camera.State = 1000
+	camera.HitPoints = 1/0
 	camera.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
 	camera.GridCollisionClass = GridCollisionClass.COLLISION_NONE
 	camera:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
